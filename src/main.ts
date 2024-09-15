@@ -35,9 +35,9 @@ const viewer: any = new SpectatorViewer(scene, renderer, camera);
 //createImageBitmap(img).then(imgBitmap =>
 {
     (viewer as any).addSplatScene('public/cadre_trimmed.splat', {
-        'position': [0, -0.5, 0],
-        'rotation': [0, 0, 0, 1],
-        'scale': [1.5, 1.5, 1.5]
+        'position': [0, 8, 10],
+        'rotation': [0, 1, 0, 1],
+        'scale': [2, 2, 2]
     }).then((obj: any) =>
     {
         console.log("obj?", obj);

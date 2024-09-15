@@ -8,8 +8,10 @@ const rootElement = document.createElement('div');
 document.body.appendChild(rootElement);
 
 const renderer = new THREE.WebGLRenderer({
-    antialias: false
+    antialias: false,
+    alpha: true,
 });
+renderer.setClearColor(0xffffff, 0);
 renderer.setSize(window.innerWidth, window.innerHeight);
 rootElement.appendChild(renderer.domElement);
 

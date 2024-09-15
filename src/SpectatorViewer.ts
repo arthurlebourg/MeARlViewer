@@ -21,9 +21,12 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
         //this._camera = camera;
     }
 
-    public updateLoop(_: number, frame: XRFrame): void
+    public updateLoop(time: number, frame: XRFrame): void
     {
         frame;
+        time;
+        console.log("hello");
+        //(this as any).splatMesh.getScene(0).rotateX(time / 1000);
         (this as any).update();
         (this as any).render();
         //(this as any).renderer.xr.getSession().requestAnimationFrame(this.updateLoop.bind(this));

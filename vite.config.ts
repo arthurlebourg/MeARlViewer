@@ -1,7 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
-const  __dirname = resolve();
+const __dirname = resolve();
 
 const root = resolve(__dirname, 'src')
 const outDir = resolve(__dirname, 'dist')
@@ -13,9 +13,9 @@ export default defineConfig({
   root,
   plugins: [
     viteStaticCopy({
-        targets: [
-            { src: resolve(__dirname, 'public'), dest: outDir }
-        ]
+      targets: [
+        { src: resolve(__dirname, 'public'), dest: outDir }
+      ]
 
     }),
   ],
@@ -25,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(root, 'index.html'),
-        debug: resolve(root, 'debug/index.html'),
+        //debug: resolve(root, 'debug/index.html'),
         editor: resolve(root, 'editor/index.html'),
       }
     }

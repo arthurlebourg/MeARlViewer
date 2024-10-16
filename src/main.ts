@@ -23,37 +23,43 @@ window.addEventListener('resize', () =>
 });
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.copy(new THREE.Vector3().fromArray([1, 4, -6]));
+camera.position.copy(new THREE.Vector3().fromArray([1, 8, 5]));
 camera.up = new THREE.Vector3().fromArray([0, 1, 0]).normalize();
 camera.lookAt(new THREE.Vector3().fromArray([10, 4, 10]));
 
 const scene = new THREE.Scene();
-const viewer: any = new SpectatorViewer(scene, renderer, camera);
-
-//const img = document.getElementById('assiette')! as HTMLImageElement;
-// Ensure the image is loaded and ready for use
-//createImageBitmap(img).then(imgBitmap =>
+SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any) =>
 {
-    (viewer as any).addSplatScene('public/cadre_trimmed.splat', {
-        'position': [0, 8, 10],
-        'rotation': [0, 1, 0, 1],
-        'scale': [2, 2, 2]
-    }).then((obj: any) =>
+    //const img = document.getElementById('assiette')! as HTMLImageElement;
+    // Ensure the image is loaded and ready for use
+    //createImageBitmap(img).then(imgBitmap =>
     {
-        console.log("obj?", obj);
-        console.log("viewer?", viewer);
-        console.log("splatmesh?", viewer.splatMesh);
-
-        const controller = renderer.xr.getController(0);
-        console.log("controller", controller);
-        controller.addEventListener('connected', (e) =>
+        (viewer as any).addSplatScene('public/cadre_trimmed.splat', {
+            'position': [0, 0, 0],
+            'rotation': [0, 1, 0, 1],
+            'scale': [2, 2, 2]
+        }).then((obj: any) =>
         {
-            console.log("connected", e);
+            console.log("obj?", obj);
+            console.log("viewer?", viewer);
+            console.log("splatmesh?", viewer.splatMesh.getScene(0));
+            const center = new THREE.Vector3();
+            viewer.splatMesh.getSplatCenter(0, center)
+            console.log("getSplatCenter?", center);
+
+            viewer.splatMesh.getScene(0).applyMatrix4(new THREE.Matrix4().makeTranslation(-center.x, -center.y, -center.z));
+
+            const controller = renderer.xr.getController(0);
+            console.log("controller", controller);
+            controller.addEventListener('connected', (e) =>
+            {
+                console.log("connected", e);
+            });
+
+            //(viewer as any).start();
+            viewer.renderer.setAnimationLoop(viewer.updateLoop.bind(viewer));
+
         });
+    }//);
 
-        //(viewer as any).start();
-        viewer.renderer.setAnimationLoop(viewer.updateLoop.bind(viewer));
-
-    });
-}//);
-
+})

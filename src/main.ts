@@ -1,8 +1,6 @@
 import * as THREE from "three";
 
 import { SpectatorViewer } from "./SpectatorViewer.js";
-// @ts-ignore
-import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
 
 const rootElement = document.createElement('div');
 document.body.appendChild(rootElement);
@@ -28,6 +26,11 @@ camera.up = new THREE.Vector3().fromArray([0, 1, 0]).normalize();
 camera.lookAt(new THREE.Vector3().fromArray([10, 4, 10]));
 
 const scene = new THREE.Scene();
+const boxColor = 0xBBBBBB;
+const boxGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+const boxMesh = new THREE.Mesh(boxGeometry, new THREE.MeshBasicMaterial({ 'color': boxColor }));
+boxMesh.position.set(0, 0, 0);
+scene.add(boxMesh);
 SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any) =>
 {
     //const img = document.getElementById('assiette')! as HTMLImageElement;
@@ -38,17 +41,11 @@ SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any
             'position': [0, 0, 0],
             'rotation': [0, 1, 0, 1],
             'scale': [2, 2, 2]
-        }).then((obj: any) =>
+        }).then((_: any) =>
         {
-            console.log("obj?", obj);
-            console.log("viewer?", viewer);
-            console.log("splatmesh?", viewer.splatMesh.getScene(0));
             const center = new THREE.Vector3();
             viewer.splatMesh.getSplatCenter(0, center)
-            console.log("getSplatCenter?", center);
-
-            viewer.splatMesh.getScene(0).applyMatrix4(new THREE.Matrix4().makeTranslation(-center.x, -center.y, -center.z));
-
+            viewer.splatMesh.getScene(0).matrixAutoUpdate = false;
             const controller = renderer.xr.getController(0);
             console.log("controller", controller);
             controller.addEventListener('connected', (e) =>

@@ -1,4 +1,3 @@
-// @ts-ignore
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
 import * as THREE from "three";
 
@@ -6,16 +5,15 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 {
     //private _scene: THREE.Scene;
     //private _camera: THREE.Camera;
-    private _referenceSpace: XRReferenceSpace = null!;
     private _renderer: THREE.WebGLRenderer;
 
-    private _debugSphere = new THREE.Mesh(new THREE.SphereGeometry(15, 32, 16), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    private _debugSphere = new THREE.Mesh(new THREE.SphereGeometry(0.05, 32, 16), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
 
     private constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera, imgBitmap: ImageBitmap)
     {
         super({
             'halfPrecisionCovariancesOnGPU': true,
-            'scene': scene,
+            'threeScene': scene,
             'selfDrivenMode': false,
             'renderer': renderer,
             'camera': camera,
@@ -25,7 +23,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
                 trackedImages: [
                     {
                         image: imgBitmap,
-                        widthInMeters: 0.2
+                        widthInMeters: 0.1
                     }
                 ]
             }
@@ -34,26 +32,13 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
         this._renderer = renderer;
         //this._scene = scene;
         //this._camera = camera;
-        this.setupReferenceSpace();
+        this._debugSphere.position.set(1, 1, 1)
+        this._debugSphere.matrixAutoUpdate = false;
         scene.add(this._debugSphere)
-
-    }
-
-    private async setupReferenceSpace()
-    {
-        while (this._renderer.xr.getSession() === null)
-        {
-            console.log("waiting")
-            await new Promise(resolve => setTimeout(resolve, 100))
-        }
-        console.log("making reference space")
-        this._referenceSpace = await this._renderer.xr.getSession()?.requestReferenceSpace("local")!;
-
     }
 
     public static async createSpectatorViewer(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera)
     {
-
         const img = document.getElementById('assiette')! as HTMLImageElement;
         // Ensure the image is loaded and ready for use
         const imgBitmap = await createImageBitmap(img);
@@ -100,21 +85,26 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
                 if (state == "tracked")
                 {
-                    console.log("tracked image")
+                    //console.log("tracked image")
                 } else if (state == "emulated")
                 {
-                    console.log("emulated image")
+                    //console.log("emulated image")
                 }
-                if (this._referenceSpace)
+                const referenceSpace = this._renderer.xr.getReferenceSpace();
+                if (referenceSpace)
                 {
-                    const pose = frame.getPose(result.imageSpace, this._referenceSpace);
-                    console.log(pose);
+                    const pose = frame.getPose(result.imageSpace, referenceSpace);
                     if (pose)
                     {
-                        (this as any).splatMesh.getScene(0).matrix = new THREE.Matrix4().fromArray(pose.transform.matrix);
-                        (this as any).splatMesh.getScene(0).updateMatrix();
-                        this._debugSphere.matrix = new THREE.Matrix4().fromArray(pose.transform.matrix);
-                        this._debugSphere.updateMatrix();
+                        //console.log(this.splatMesh.getScene(0));
+                        //console.log(this.splatMesh);
+                        this._debugSphere.matrix.fromArray(pose.transform.matrix);
+                        //this._debugSphere.updateMatrix();
+                        this.splatMesh.getScene(0).matrix.fromArray(pose.transform.matrix);
+                        //console.log("splat", this.splatMesh.getScene(0))
+                        //this.splatMesh.getScene(0).updateMatrix();
+                        //this._debugSphere.updateMatrix();
+                        //this._debugSphere.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z)
                     }
 
                 }

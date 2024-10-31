@@ -7,7 +7,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
     //private _camera: THREE.Camera;
     private _renderer: THREE.WebGLRenderer;
 
-    private _debugSphere = new THREE.Mesh(new THREE.SphereGeometry(0.05, 32, 16), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    private _debugSphere = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xff2200 }));
 
     private constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera, imgBitmap: ImageBitmap)
     {
@@ -39,7 +39,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
     public static async createSpectatorViewer(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera)
     {
-        const img = document.getElementById('assiette')! as HTMLImageElement;
+        const img = document.getElementById('marker')! as HTMLImageElement;
         // Ensure the image is loaded and ready for use
         const imgBitmap = await createImageBitmap(img);
 
@@ -83,31 +83,31 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
                 const state = result.trackingState;
 
-                if (state == "tracked")
+                if (state === "tracked")
                 {
-                    //console.log("tracked image")
-                } else if (state == "emulated")
+                    const referenceSpace = this._renderer.xr.getReferenceSpace();
+                    if (referenceSpace)
+                    {
+                        const pose = frame.getPose(result.imageSpace, referenceSpace);
+                        if (pose)
+                        {
+                            this.splatMesh.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+                            this.splatMesh.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
+                            this._debugSphere.visible = true;
+                            this.splatMesh.visible = true;
+                        }
+                    }
+                }
+                else
+                {
+                    this._debugSphere.visible = false;
+                    this.splatMesh.visible = false;
+                }
+                /*else if (state == "emulated")
                 {
                     //console.log("emulated image")
-                }
-                const referenceSpace = this._renderer.xr.getReferenceSpace();
-                if (referenceSpace)
-                {
-                    const pose = frame.getPose(result.imageSpace, referenceSpace);
-                    if (pose)
-                    {
-                        //console.log(this.splatMesh.getScene(0));
-                        //console.log(this.splatMesh);
-                        this._debugSphere.matrix.fromArray(pose.transform.matrix);
-                        //this._debugSphere.updateMatrix();
-                        this.splatMesh.getScene(0).matrix.fromArray(pose.transform.matrix);
-                        //console.log("splat", this.splatMesh.getScene(0))
-                        //this.splatMesh.getScene(0).updateMatrix();
-                        //this._debugSphere.updateMatrix();
-                        //this._debugSphere.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z)
-                    }
+                }*/
 
-                }
             }
         }
         //console.log("hello");

@@ -26,11 +26,6 @@ camera.up = new THREE.Vector3().fromArray([0, 1, 0]).normalize();
 camera.lookAt(new THREE.Vector3().fromArray([10, 4, 10]));
 
 const scene = new THREE.Scene();
-const boxColor = 0xBBBBBB;
-const boxGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-const boxMesh = new THREE.Mesh(boxGeometry, new THREE.MeshBasicMaterial({ 'color': boxColor }));
-boxMesh.position.set(0, 0, 0);
-scene.add(boxMesh);
 SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any) =>
 {
     //const img = document.getElementById('assiette')! as HTMLImageElement;
@@ -39,13 +34,11 @@ SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any
     {
         (viewer as any).addSplatScene('public/cadre_trimmed.splat', {
             'position': [0, 0, 0],
-            'rotation': [0, 1, 0, 1],
-            'scale': [2, 2, 2]
+            'rotation': [0, 0, 0, 1],
+            'scale': [1, 1, 1]
         }).then((_: any) =>
         {
-            const center = new THREE.Vector3();
-            viewer.splatMesh.getSplatCenter(0, center)
-            viewer.splatMesh.getScene(0).matrixAutoUpdate = false;
+            //viewer.splatMesh.getScene(0).matrixAutoUpdate = false;
             const controller = renderer.xr.getController(0);
             console.log("controller", controller);
             controller.addEventListener('connected', (e) =>
@@ -53,6 +46,9 @@ SpectatorViewer.createSpectatorViewer(scene, renderer, camera).then((viewer: any
                 console.log("connected", e);
             });
 
+            //viewer.splatMesh.matrixAutoUpdate = false;
+
+            console.log("viewer", viewer)
             //(viewer as any).start();
             viewer.renderer.setAnimationLoop(viewer.updateLoop.bind(viewer));
 

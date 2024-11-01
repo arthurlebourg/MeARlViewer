@@ -6,6 +6,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
     //private _scene: THREE.Scene;
     private _camera: THREE.Camera;
     private _renderer: THREE.WebGLRenderer;
+    private meshA: THREE.Object3D;
 
     private isDragging = false;
     private previousMousePosition = { x: 0, y: 0 };
@@ -21,6 +22,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
             'renderer': renderer,
             'camera': camera,
             'focalAdjustment': 4.0,
+            'dynamicScene': true,
             'webXRMode': GaussianSplats3D.WebXRMode.AR,
             'webXRSessionInit': {
                 requiredFeatures: ['image-tracking'],
@@ -49,12 +51,43 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
         renderer.domElement.addEventListener('touchstart', this.onTouchStart.bind(this), false);
         renderer.domElement.addEventListener('touchmove', this.onTouchMove.bind(this), false);
         renderer.domElement.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+        this.meshA = new THREE.Object3D();
+        this.addSplatScene('public/amogus_red.splat').then((_: any) =>
+        {
+            //viewer.splatMesh.getScene(0).matrixAutoUpdate = false;
+            const controller = renderer.xr.getController(0);
+            console.log("controller", controller);
+            controller.addEventListener('connected', (e) =>
+            {
+                console.log("connected", e);
+            });
+
+            //viewer.splatMesh.matrixAutoUpdate = false;
+
+            //(viewer as any).start();
+            // generate splat mesh parent objects
+
+
+            // add splat mesh parent objects to the scene
+            this.splatMesh.add(this.meshA);
+
+            // You can modify the transform components (position, quaternion, scale) of a SplatScene
+            // directly like any three.js object OR you can just attach them to another three.js object
+            // and they will be transformed accordingly. Below we are going with the latter approach.
+            // The splat scenes at index 1 & 2 are (by default) children of viewer.splatMesh, so we
+            // re-parent them to meshA and meshB respectively.
+            this.meshA.add(this.getSplatScene(0));
+            this.renderer.setAnimationLoop(this.updateLoop.bind(this));
+
+        });
+
     }
 
     private onMouseDown(event: MouseEvent)
     {
         this.isDragging = !this.isDragging;
         this.previousMousePosition = { x: event.clientX, y: event.clientY };
+        return true;
     }
 
     private onMouseMove(event: MouseEvent)
@@ -64,7 +97,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
             const deltaX = event.clientX - this.previousMousePosition.x;
 
             // Rotate model based on drag distance
-            this.splatMesh.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
+            this.meshA.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
 
             this.previousMousePosition = { x: event.clientX, y: event.clientY };
         }
@@ -72,6 +105,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
     private onMouseUp(_: MouseEvent)
     {
+        console.log('on mouse up', this)
         this.isDragging = false;
     }
 
@@ -88,7 +122,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
             const deltaX = event.touches[0].clientX - this.previousMousePosition.x;
 
             // Rotate model based on drag distance
-            this.splatMesh.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
+            this.meshA.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
 
             this.previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
         }
@@ -151,15 +185,15 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
                         const pose = frame.getPose(result.imageSpace, referenceSpace);
                         if (pose)
                         {
-                            this.splatMesh.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
-                            this.splatMesh.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
-                            this.splatMesh.visible = true;
+                            this.meshA.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+                            this.meshA.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
+                            this.meshA.visible = true;
                         }
                     }
                 }
                 else
                 {
-                    this.splatMesh.visible = false;
+                    this.meshA.visible = false;
                 }
 
             }

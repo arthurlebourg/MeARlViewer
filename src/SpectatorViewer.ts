@@ -4,10 +4,13 @@ import * as THREE from "three";
 export class SpectatorViewer extends GaussianSplats3D.Viewer
 {
     //private _scene: THREE.Scene;
-    //private _camera: THREE.Camera;
+    private _camera: THREE.Camera;
     private _renderer: THREE.WebGLRenderer;
 
-    private _debugSphere = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xff2200 }));
+    private isDragging = false;
+    private previousMousePosition = { x: 0, y: 0 };
+
+    //private _debugSphere = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xff2200 }));
 
     private constructor(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera, imgBitmap: ImageBitmap)
     {
@@ -17,6 +20,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
             'selfDrivenMode': false,
             'renderer': renderer,
             'camera': camera,
+            'focalAdjustment': 4.0,
             'webXRMode': GaussianSplats3D.WebXRMode.AR,
             'webXRSessionInit': {
                 requiredFeatures: ['image-tracking'],
@@ -31,10 +35,68 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
         this._renderer = renderer;
         //this._scene = scene;
-        //this._camera = camera;
-        this._debugSphere.position.set(1, 1, 1)
-        this._debugSphere.matrixAutoUpdate = false;
-        scene.add(this._debugSphere)
+        this._camera = camera;
+        //this._debugSphere.position.set(1, 1, 1)
+        //this._debugSphere.matrixAutoUpdate = false;
+        //scene.add(this._debugSphere)
+        this._camera.position.set(0, 0.25, 0.5)
+        console.log("debug", this.splatMesh.rotation)
+
+        // Set up event listeners
+        renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+        renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+        renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+        renderer.domElement.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+        renderer.domElement.addEventListener('touchmove', this.onTouchMove.bind(this), false);
+        renderer.domElement.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+    }
+
+    private onMouseDown(event: MouseEvent)
+    {
+        this.isDragging = !this.isDragging;
+        this.previousMousePosition = { x: event.clientX, y: event.clientY };
+    }
+
+    private onMouseMove(event: MouseEvent)
+    {
+        if (this.isDragging)
+        {
+            const deltaX = event.clientX - this.previousMousePosition.x;
+
+            // Rotate model based on drag distance
+            this.splatMesh.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
+
+            this.previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+    }
+
+    private onMouseUp(_: MouseEvent)
+    {
+        this.isDragging = false;
+    }
+
+    private onTouchStart(event: TouchEvent)
+    {
+        this.isDragging = true;
+        this.previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    }
+
+    private onTouchMove(event: TouchEvent)
+    {
+        if (this.isDragging)
+        {
+            const deltaX = event.touches[0].clientX - this.previousMousePosition.x;
+
+            // Rotate model based on drag distance
+            this.splatMesh.rotation.y += deltaX * 0.01; // Adjust the multiplier for rotation speed
+
+            this.previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        }
+    }
+
+    private onTouchEnd(_: TouchEvent)
+    {
+        this.isDragging = false;
     }
 
     public static async createSpectatorViewer(scene: THREE.Scene, renderer: THREE.WebGLRenderer, camera: THREE.Camera)
@@ -47,11 +109,9 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
     }
 
-    public async updateLoop(time: number, frame: XRFrame)
+    public updateLoop(_: number, frame: XRFrame)
     {
-        frame;
-        time;
-        if (this._renderer.xr.getSession())
+        /*if (this._renderer.xr.getSession())
         {
             const scores = await (this._renderer.xr.getSession()! as any).getTrackedImageScores();
             let trackableImages = 0;
@@ -69,7 +129,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
             {
                 //WarnUser("No trackable images");
             }
-        }
+        }*/
 
         if (frame)
         {
@@ -83,7 +143,7 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
 
                 const state = result.trackingState;
 
-                if (state === "tracked")
+                if (state === "tracked" || state === "emulated")
                 {
                     const referenceSpace = this._renderer.xr.getReferenceSpace();
                     if (referenceSpace)
@@ -93,38 +153,21 @@ export class SpectatorViewer extends GaussianSplats3D.Viewer
                         {
                             this.splatMesh.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
                             this.splatMesh.quaternion.set(pose.transform.orientation.x, pose.transform.orientation.y, pose.transform.orientation.z, pose.transform.orientation.w);
-                            this._debugSphere.visible = true;
                             this.splatMesh.visible = true;
                         }
                     }
                 }
                 else
                 {
-                    this._debugSphere.visible = false;
                     this.splatMesh.visible = false;
                 }
-                /*else if (state == "emulated")
-                {
-                    //console.log("emulated image")
-                }*/
 
             }
         }
-        //console.log("hello");
-        //(this as any).splatMesh.getScene(0).rotateX(time / 1000);
-        (this as any).update();
-        (this as any).render();
-        //(this as any).renderer.xr.getSession().requestAnimationFrame(this.updateLoop.bind(this));
+        //const deltaTime = (time - this.previous_time) * 0.001; // Convert to seconds
+        //console.log("deltaTime", deltaTime * 0.5, this.splatMesh.rotation._y)
+        //this.splatMesh.rotateY(deltaTime * 0.5);
+        this.update();
+        this.render();
     }
-
-
-    /*public async start()
-    {
-        while ((this as any).viewer.xr.getSession() === null)
-        {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        (this as any).viewer.xr.getSession().requestAnimationFrame(this.updateLoop.bind(this));
-
-    }*/
 }
